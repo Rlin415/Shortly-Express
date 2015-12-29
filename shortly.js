@@ -2,8 +2,8 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
-
-
+var session = require('express-session');
+var crypto = require('crypto');
 var db = require('./app/config');
 var Users = require('./app/collections/users');
 var User = require('./app/models/user');
@@ -22,25 +22,27 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
+app.get('/',
+function(req, res) {
+    // check to see if the user is authenticated
+        // if they are, then serve up index
+        // if not then serve up login
+  res.render('signup');
+});
 
-app.get('/', 
+app.get('/create',
 function(req, res) {
   res.render('index');
 });
 
-app.get('/create', 
-function(req, res) {
-  res.render('index');
-});
-
-app.get('/links', 
+app.get('/links',
 function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
   });
 });
 
-app.post('/links', 
+app.post('/links',
 function(req, res) {
   var uri = req.body.url;
 
@@ -74,10 +76,48 @@ function(req, res) {
   });
 });
 
+app.post('/signup', function(req, res) {
+  var username = req.body.username;
+  var password = req.body.password;
+
+  new User({ 'username': username}).fetch().then(function(found) {
+    if (found) {
+      console.log('Username already taken!');
+      res.redirect('/signup');
+    } else {
+      var user = new User({
+        'username' : username,
+        'password' : password
+      });
+
+      user.save().then(function(newUser) {
+        Users.add(newUser);
+        res.send(200, newUser);
+      });
+    }
+  });
+
+});
+
+
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
 
+http://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript
+
+
+
+var genuuid = function() {
+    return crypto.randomBytes(48).toString('hex');
+};
+
+app.use(session({
+   genid: function () {
+     return genuuid();
+   },
+   secret: "Sith Jar Jar"
+}));
 
 
 /************************************************************/
