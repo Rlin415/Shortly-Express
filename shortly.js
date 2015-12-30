@@ -22,27 +22,35 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
-app.get('/',
-function(req, res) {
-    // check to see if the user is authenticated
-        // if they are, then serve up index
-        // if not then serve up login
-  res.render('signup');
+var genuuid = function() {
+    return crypto.randomBytes(48).toString('hex');
+};
+
+app.use(session({
+   genid: function () {
+     return genuuid();
+   },
+   secret: "Sith Jar Jar"
+}));
+
+app.get('/', util.checkUser, function(req, res) {
+    console.log('I AM LISTENING!!!');
+  res.render('index');
 });
 
-app.get('/create',
+app.get('/create', util.checkUser,
 function(req, res) {
   res.render('index');
 });
 
-app.get('/links',
+app.get('/links', util.checkUser,
 function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
   });
 });
 
-app.post('/links',
+app.post('/links', util.checkUser,
 function(req, res) {
   var uri = req.body.url;
 
@@ -76,6 +84,12 @@ function(req, res) {
   });
 });
 
+// app get /signup
+app.get('/signup', function (req, res) {
+    // render signup page
+    res.render('signup');
+});
+
 app.post('/signup', function(req, res) {
   var username = req.body.username;
   var password = req.body.password;
@@ -83,7 +97,7 @@ app.post('/signup', function(req, res) {
   new User({ 'username': username}).fetch().then(function(found) {
     if (found) {
       console.log('Username already taken!');
-      res.redirect('/signup');
+      res.redirect('/login');
     } else {
       var user = new User({
         'username' : username,
@@ -92,8 +106,41 @@ app.post('/signup', function(req, res) {
 
       user.save().then(function(newUser) {
         Users.add(newUser);
-        res.send(200, newUser);
+        //res.send(200, newUser);
+
+        // req.sessionID = genuuid();
+        // util.createSession(req, res, newUser);
+        res.redirect('/');
+          // we may have to use end instead of redirect because it doesn't show up in the url tab
       });
+    }
+  });
+
+});
+
+// app get /login
+app.get('/login', function (req, res) {
+    // render login page
+    res.render('login');
+});
+
+app.post('/login', function(req, res) {
+  var username = req.body.username;
+  var password = req.body.password;
+
+  new User({ 'username': username}).fetch().then(function(user) {
+
+    if (!user) {
+      console.log('Username not found!');
+      res.redirect('/login');
+    } else {
+        user.comparePassword(password, function (match) {
+            if (match) {
+                util.createSession(req, res, user);
+            } else {
+                res.redirect('/login');
+            }
+        })
     }
   });
 
@@ -104,20 +151,6 @@ app.post('/signup', function(req, res) {
 // Write your authentication routes here
 /************************************************************/
 
-http://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript
-
-
-
-var genuuid = function() {
-    return crypto.randomBytes(48).toString('hex');
-};
-
-app.use(session({
-   genid: function () {
-     return genuuid();
-   },
-   secret: "Sith Jar Jar"
-}));
 
 
 /************************************************************/
