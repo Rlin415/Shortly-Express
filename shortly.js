@@ -34,7 +34,6 @@ app.use(session({
 }));
 
 app.get('/', util.checkUser, function(req, res) {
-    console.log('I AM LISTENING!!!');
   res.render('index');
 });
 
@@ -84,9 +83,7 @@ function(req, res) {
   });
 });
 
-// app get /signup
 app.get('/signup', function (req, res) {
-    // render signup page
     res.render('signup');
 });
 
@@ -96,7 +93,6 @@ app.post('/signup', function(req, res) {
 
   new User({ 'username': username}).fetch().then(function(found) {
     if (found) {
-      console.log('Username already taken!');
       res.redirect('/login');
     } else {
       var user = new User({
@@ -106,21 +102,14 @@ app.post('/signup', function(req, res) {
 
       user.save().then(function(newUser) {
         Users.add(newUser);
-        //res.send(200, newUser);
-
-        // req.sessionID = genuuid();
-        // util.createSession(req, res, newUser);
         res.redirect('/');
-          // we may have to use end instead of redirect because it doesn't show up in the url tab
       });
     }
   });
 
 });
 
-// app get /login
 app.get('/login', function (req, res) {
-    // render login page
     res.render('login');
 });
 
@@ -134,13 +123,13 @@ app.post('/login', function(req, res) {
       console.log('Username not found!');
       res.redirect('/login');
     } else {
-        user.comparePassword(password, function (match) {
-            if (match) {
-                util.createSession(req, res, user);
-            } else {
-                res.redirect('/login');
-            }
-        });
+      user.comparePassword(password, function (match) {
+        if (match) {
+          util.createSession(req, res, user);
+        } else {
+          res.redirect('/login');
+        }
+      });
     }
   });
 
@@ -151,13 +140,6 @@ app.get('/logout', function(req, res) {
     res.redirect('/login');
   });
 });
-
-
-/************************************************************/
-// Write your authentication routes here
-/************************************************************/
-
-
 
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail

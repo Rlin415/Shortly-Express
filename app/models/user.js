@@ -13,9 +13,6 @@ var User = db.Model.extend({
     var dbPassword = this.get('password');
 
     bcrypt.compare(enteredPw, dbPassword, function(err, res) {
-      console.log('database password ', dbPassword);
-      console.log('entered password ', enteredPw);
-      console.log('res', res);
       callback(res);
     });
 
@@ -25,9 +22,9 @@ var User = db.Model.extend({
   hashPassword: function() {
     var cipher = Promise.promisify(bcrypt.hash);
     return cipher(this.get('password'), null, null).bind(this)
-        .then(function (hash) {
-          this.set('password', hash);
-        });
+      .then(function (hash) {
+        this.set('password', hash);
+      });
   }
 
 });
