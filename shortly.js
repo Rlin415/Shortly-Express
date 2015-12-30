@@ -140,7 +140,7 @@ app.post('/login', function(req, res) {
             } else {
                 res.redirect('/login');
             }
-        })
+        });
     }
   });
 
